@@ -466,7 +466,7 @@ func NewQuery(label string, t, c uint16) *Message {
 	}
 }
 
-func (m *Message) AddQuery(label string, t, c uint16) {
+func (m *Message) AddQuestion(label string, t, c uint16) {
 	m.Questions = append(m.Questions, Question{
 		QNAME:  Labelize(label),
 		QTYPE:  t,
