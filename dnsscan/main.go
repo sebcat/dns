@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	nsaddr  = flag.String("ns", "8.8.8.8:53", "DNS server")
+	nsaddr  = flag.String("server", "8.8.8.8:53", "DNS server")
 	nsproto = flag.String("proto", "udp", "transport layer protocol")
 	ttl     = flag.Duration("timeout", 10*time.Second, "dial and connection timeout")
 	nsclass = flag.String("class", "IN", "name class")
