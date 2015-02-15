@@ -1,6 +1,7 @@
 package dnsscanner
 
 import (
+	"net"
 	"strings"
 )
 
@@ -48,6 +49,8 @@ func Labelize(name string) (res []Label) {
 		s = append(s, []byte(section)...)
 		res = append(res, Label(s))
 	}
+
+	res = append(res, 0x00)
 
 	return
 }
@@ -142,4 +145,16 @@ func (m *Message) MarshalBinary() (data []byte, err error) {
 	}
 
 	return
+}
+
+func (m *Message) Send(conn net.Conn) error {
+	if b, err := m.MarshalBinary(); err != nil {
+		return err
+	} else {
+		if _, err := conn.Write(b); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
