@@ -50,7 +50,7 @@ func Labelize(name string) (res []Label) {
 		res = append(res, Label(s))
 	}
 
-	res = append(res, 0x00)
+	res = append(res, Label([]byte{0}))
 
 	return
 }
