@@ -1,7 +1,7 @@
 package dnsscanner
 
 import (
-	"net"
+	"io"
 	"strings"
 )
 
@@ -147,11 +147,11 @@ func (m *Message) MarshalBinary() (data []byte, err error) {
 	return
 }
 
-func (m *Message) Send(conn net.Conn) error {
+func (m *Message) Send(w io.Writer) error {
 	if b, err := m.MarshalBinary(); err != nil {
 		return err
 	} else {
-		if _, err := conn.Write(b); err != nil {
+		if _, err := w.Write(b); err != nil {
 			return err
 		}
 	}
@@ -172,4 +172,9 @@ func NewQuery(label string, t, c uint16) *Message {
 			QCLASS: c,
 		},
 	}
+}
+
+func Receive(r io.Reader) (msg *Message, err error) {
+	// TODO: Implement
+	return
 }
