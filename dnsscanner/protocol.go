@@ -24,6 +24,7 @@ const (
 	MINFO       = 14
 	MX          = 15
 	TXT         = 16
+	AAAA        = 28
 	AXFR        = 252
 	MAILB       = 253
 	MAILA       = 254
