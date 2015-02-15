@@ -159,3 +159,18 @@ func (m *Message) Send(conn net.Conn) error {
 
 	return nil
 }
+
+func NewQuery(label string, t QType, c QClass) *Message {
+	return &Message{
+		Header: Header{
+			ID:      0xabcd,
+			RD:      1,
+			QDCOUNT: 1,
+		},
+		Question: Question{
+			QNAME:  Labelize(label),
+			QTYPE:  t,
+			QCLASS: c,
+		},
+	}
+}
