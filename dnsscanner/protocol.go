@@ -1,6 +1,8 @@
 package dnsscanner
 
 import (
+	"bufio"
+	"encoding/binary"
 	"errors"
 	"io"
 	"strconv"
@@ -338,6 +340,32 @@ func Labelize(name string) (res []Label) {
 	return
 }
 
+func readLabels(br *bufio.Reader) (labels []Label, err error) {
+	for {
+		length, err := br.ReadByte()
+		if err != nil {
+			return nil, err
+		}
+
+		if length == 0 {
+			break
+		}
+
+		rest := make([]byte, int(length))
+		if nbytes, err := br.Read(rest); err != nil {
+			return nil, err
+		} else if nbytes != int(length) {
+			return nil, ErrPacketTooSmall
+		}
+
+		lbl := []byte{length}
+		lbl = append(lbl, rest...)
+		labels = append(labels, Label(lbl))
+	}
+
+	return labels, nil
+}
+
 // QR
 const (
 	Query    = 0
@@ -361,6 +389,14 @@ const (
 	Refused        = 5
 )
 
+// XXX
+// The header structure is pretty "verbose", we only really
+// need 12 bytes for the header, so the Header type could
+// be type Header [12]byte. Instead we use 17 bytes
+// and we copy it from the recv buffer
+//
+// It's not neccesarily bad, as it can be nice to work
+// with (h.AA = 1 vs. h.SetAA(true))
 type Header struct {
 	ID      uint16
 	QR      byte
@@ -379,7 +415,7 @@ type Header struct {
 func (h *Header) MarshalBinary() (data []byte, err error) {
 	data = []byte{
 		byte(h.ID >> 8), byte(h.ID & 0xff),
-		byte(h.QR<<7 | h.OPCODE<<6 | h.AA<<2 | h.TC<<1 | h.RD),
+		byte(h.QR<<7 | h.OPCODE<<3 | h.AA<<2 | h.TC<<1 | h.RD),
 		byte(h.RA<<7 | (h.RCODE & 0x0f)),
 		byte(h.QDCOUNT >> 8), byte(h.QDCOUNT & 0xff),
 		byte(h.ANCOUNT >> 8), byte(h.ANCOUNT & 0xff),
@@ -388,6 +424,29 @@ func (h *Header) MarshalBinary() (data []byte, err error) {
 	}
 
 	return
+}
+
+func (h *Header) read(r io.Reader) error {
+	var data [12]byte
+	if length, err := r.Read(data[:]); err != nil {
+		return err
+	} else if length < 12 {
+		return ErrPacketTooSmall
+	}
+
+	h.ID = uint16(data[0])<<8 | uint16(data[1])
+	h.QR = data[2] >> 7
+	h.OPCODE = (data[2] >> 3) & 0x0f
+	h.AA = (data[2] >> 2) & 1
+	h.TC = (data[2] >> 1) & 1
+	h.RD = data[2] & 1
+	h.RA = data[3] >> 7
+	h.RCODE = data[3] & 0x0f
+	h.QDCOUNT = uint16(data[4])<<8 | uint16(data[5])
+	h.ANCOUNT = uint16(data[6])<<8 | uint16(data[7])
+	h.NSCOUNT = uint16(data[8])<<8 | uint16(data[9])
+	h.ARCOUNT = uint16(data[10])<<8 | uint16(data[11])
+	return nil
 }
 
 type Question struct {
@@ -401,10 +460,19 @@ func (q *Question) MarshalBinary() (data []byte, err error) {
 		data = append(data, []byte(label)...)
 	}
 
-	data = append(data,
-		[]byte{
-			byte(q.QTYPE >> 8), byte(q.QTYPE & 0xff),
-			byte(q.QCLASS >> 8), byte(q.QCLASS & 0xff)}...)
+	data = append(data, []byte{
+		byte(q.QTYPE >> 8), byte(q.QTYPE & 0xff),
+		byte(q.QCLASS >> 8), byte(q.QCLASS & 0xff)}...)
+	return
+}
+
+func (q *Question) read(r *bufio.Reader) (err error) {
+	if q.QNAME, err = readLabels(r); err == nil {
+		if err = binary.Read(r, binary.BigEndian, &q.QTYPE); err == nil {
+			err = binary.Read(r, binary.BigEndian, &q.QCLASS)
+		}
+	}
+
 	return
 }
 
@@ -471,7 +539,27 @@ func (m *Message) AddQuestion(label string, t, c uint16) {
 	m.Header.QDCOUNT = uint16(len(m.Questions))
 }
 
+// returned from Receive when a read packet is too short
+var ErrPacketTooSmall = errors.New("packet too small")
+
 func Receive(r io.Reader) (msg *Message, err error) {
-	// TODO: Implement
+	m := &Message{}
+	br := bufio.NewReader(r)
+	if err = m.Header.read(br); err != nil {
+		return
+	}
+
+	for i := 0; i < int(m.Header.QDCOUNT); i++ {
+		var q Question
+		if err = q.read(br); err != nil {
+			return
+		}
+
+		m.Questions = append(m.Questions, q)
+	}
+
+	// TODO: read the rest of the response
+
+	msg = m
 	return
 }

@@ -31,6 +31,12 @@ func lookup(wg *sync.WaitGroup, proto, addr string, timeout time.Duration, query
 		log.Println(err)
 		return
 	}
+
+	if resp, err := dnsscanner.Receive(conn); err != nil {
+		log.Println("ERR", err)
+	} else {
+		log.Println("OK", resp)
+	}
 }
 
 func main() {
