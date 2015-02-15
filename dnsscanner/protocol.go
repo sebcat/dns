@@ -184,7 +184,7 @@ func TypeToString(t uint16) string {
 }
 
 func TypeFromString(str string) (val uint16, err error) {
-	switch str {
+	switch strings.ToUpper(str) {
 	case "A":
 		val = A
 	case "NS":
@@ -310,7 +310,7 @@ func ClassToString(c uint16) string {
 }
 
 func ClassFromString(str string) (val uint16, err error) {
-	switch str {
+	switch strings.ToUpper(str) {
 	case "IN":
 		val = IN
 	case "CS":
