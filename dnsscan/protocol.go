@@ -52,16 +52,56 @@ func Labelize(name string) (res []Label) {
 	return
 }
 
-type QR int
-
+// QR
 const (
-	QRQuery    QR = 0
-	QRResponse    = 1
+	Query    = 0
+	Response = 1
+)
+
+//OPCODEs
+const (
+	QUERY  = 0
+	IQUERY = 1
+	STATUS = 2
+)
+
+// RCODEs
+const (
+	NoError        = 0
+	FormatError    = 1
+	ServerFailure  = 2
+	NameError      = 3
+	NotImplemented = 4
+	Refused        = 5
 )
 
 type Header struct {
-	ID uint16
-	QR QR
+	ID      uint16
+	QR      byte
+	OPCODE  byte
+	AA      byte
+	TC      byte
+	RD      byte
+	RA      byte
+	RCODE   byte
+	QDCOUNT uint16
+	ANCOUNT uint16
+	NSCOUNT uint16
+	ARCOUNT uint16
+}
+
+func (h *Header) MarshalBinary() (data []byte, err error) {
+	data = []byte{
+		byte(h.ID >> 8), byte(h.ID & 0xff),
+		byte(h.QR<<7 | h.OPCODE<<6 | h.AA<<2 | h.TC<<1 | h.RD),
+		byte(h.RA<<7 | (h.RCODE & 0x0f)),
+		byte(h.QDCOUNT >> 8), byte(h.QDCOUNT & 0xff),
+		byte(h.ANCOUNT >> 8), byte(h.ANCOUNT & 0xff),
+		byte(h.NSCOUNT >> 8), byte(h.NSCOUNT & 0xff),
+		byte(h.ARCOUNT >> 8), byte(h.ARCOUNT & 0xff),
+	}
+
+	return
 }
 
 type Question struct {
@@ -70,7 +110,36 @@ type Question struct {
 	QCLASS QClass
 }
 
+func (q *Question) MarshalBinary() (data []byte, err error) {
+	for _, label := range q.QNAME {
+		data = append(data, []byte(label)...)
+	}
+
+	data = append(data,
+		[]byte{
+			byte(q.QTYPE >> 8), byte(q.QTYPE & 0xff),
+			byte(q.QCLASS >> 8), byte(q.QCLASS & 0xff)}...)
+	return
+}
+
 type Message struct {
 	Header   Header
 	Question Question
+	// TODO: add missing fields
+}
+
+func (m *Message) MarshalBinary() (data []byte, err error) {
+	if hdr, err := m.Header.MarshalBinary(); err != nil {
+		return nil, err
+	} else {
+		data = append(data, hdr...)
+	}
+
+	if q, err := m.Question.MarshalBinary(); err != nil {
+		return nil, err
+	} else {
+		data = append(data, q...)
+	}
+
+	return
 }
