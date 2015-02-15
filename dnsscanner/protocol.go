@@ -414,8 +414,8 @@ func (q *Question) MarshalBinary() (data []byte, err error) {
 }
 
 type Message struct {
-	Header   Header
-	Question Question
+	Header    Header
+	Questions []Question
 	// TODO: add missing fields
 }
 
@@ -426,10 +426,12 @@ func (m *Message) MarshalBinary() (data []byte, err error) {
 		data = append(data, hdr...)
 	}
 
-	if q, err := m.Question.MarshalBinary(); err != nil {
-		return nil, err
-	} else {
-		data = append(data, q...)
+	for _, question := range m.Questions {
+		if q, err := question.MarshalBinary(); err != nil {
+			return nil, err
+		} else {
+			data = append(data, q...)
+		}
 	}
 
 	return
@@ -454,12 +456,24 @@ func NewQuery(label string, t, c uint16) *Message {
 			RD:      1,
 			QDCOUNT: 1,
 		},
-		Question: Question{
-			QNAME:  Labelize(label),
-			QTYPE:  t,
-			QCLASS: c,
+		Questions: []Question{
+			Question{
+				QNAME:  Labelize(label),
+				QTYPE:  t,
+				QCLASS: c,
+			},
 		},
 	}
+}
+
+func (m *Message) AddQuery(label string, t, c uint16) {
+	m.Questions = append(m.Questions, Question{
+		QNAME:  Labelize(label),
+		QTYPE:  t,
+		QCLASS: c,
+	})
+
+	m.Header.QDCOUNT = uint16(len(m.Questions))
 }
 
 func Receive(r io.Reader) (msg *Message, err error) {
