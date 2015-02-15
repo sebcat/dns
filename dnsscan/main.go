@@ -13,9 +13,11 @@ var (
 	nsaddr  = flag.String("ns", "8.8.8.8:53", "DNS server")
 	nsproto = flag.String("proto", "udp", "transport layer protocol")
 	ttl     = flag.Duration("timeout", 10*time.Second, "dial and connection timeout")
+	nsclass = flag.String("class", "IN", "name class")
+	nstype  = flag.String("type", "ANY", "name type")
 )
 
-func lookup(wg *sync.WaitGroup, proto, addr, name string, timeout time.Duration) {
+func lookup(wg *sync.WaitGroup, proto, addr string, timeout time.Duration, query *dnsscanner.Message) {
 	defer wg.Done()
 	conn, err := net.DialTimeout(proto, addr, timeout)
 	if err != nil {
@@ -25,8 +27,7 @@ func lookup(wg *sync.WaitGroup, proto, addr, name string, timeout time.Duration)
 
 	defer conn.Close()
 	conn.SetDeadline(time.Now().Add(timeout))
-	m := dnsscanner.NewQuery(name, dnsscanner.ANY, dnsscanner.IN)
-	if err := m.Send(conn); err != nil {
+	if err := query.Send(conn); err != nil {
 		log.Println(err)
 		return
 	}
@@ -39,10 +40,21 @@ func main() {
 		log.Fatal("no names given")
 	}
 
+	c, err := dnsscanner.ClassFromString(*nsclass)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	t, err := dnsscanner.TypeFromString(*nstype)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	var wg sync.WaitGroup
 	wg.Add(len(args))
 	for _, name := range flag.Args() {
-		go lookup(&wg, *nsproto, *nsaddr, name, *ttl)
+		q := dnsscanner.NewQuery(name, t, c)
+		go lookup(&wg, *nsproto, *nsaddr, *ttl, q)
 	}
 
 	wg.Wait()

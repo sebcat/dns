@@ -1,7 +1,9 @@
 package dnsscanner
 
 import (
+	"errors"
 	"io"
+	"strconv"
 	"strings"
 )
 
@@ -23,10 +25,44 @@ const (
 	MINFO        = 14
 	MX           = 15
 	TXT          = 16
-	AAAA         = 28
-	AXFR         = 252
-	MAILB        = 253
-	MAILA        = 254
+
+	RP    = 17
+	AFSDB = 18
+	SIG   = 24
+	KEY   = 25
+
+	AAAA = 28
+
+	LOC        = 29
+	SRV        = 33
+	NAPTR      = 35
+	KX         = 36
+	CERT       = 37
+	DNAME      = 39
+	APL        = 42
+	DS         = 43
+	SSHFP      = 44
+	IPSECKEY   = 45
+	RRSIG      = 46
+	NSEC       = 47
+	DNSKEY     = 48
+	DHCID      = 49
+	NSEC3      = 50
+	NSEC3PARAM = 51
+	TLSA       = 52
+	HIP        = 55
+	CDS        = 59
+	CDNSKEY    = 60
+	TKEY       = 249
+	TSIG       = 250
+
+	AXFR  = 252
+	MAILB = 253
+	MAILA = 254
+
+	CAA = 257
+	TA  = 32768
+	DLV = 32769
 )
 
 //Classes
@@ -39,6 +75,258 @@ const (
 
 // Both type and class
 const ANY uint16 = 255
+
+func TypeToString(t uint16) string {
+	switch t {
+	case A:
+		return "A"
+	case NS:
+		return "NS"
+	case MD:
+		return "MD"
+	case MF:
+		return "MF"
+	case CNAME:
+		return "CNAME"
+	case SOA:
+		return "SOA"
+	case MB:
+		return "MB"
+	case MG:
+		return "MG"
+	case MR:
+		return "MR"
+	case NULL:
+		return "NULL"
+	case WKS:
+		return "WKS"
+	case PTR:
+		return "PTR"
+	case HINFO:
+		return "HINFO"
+	case MINFO:
+		return "MINFO"
+	case MX:
+		return "MX"
+	case TXT:
+		return "TXT"
+	case RP:
+		return "RP"
+	case AFSDB:
+		return "AFSDB"
+	case SIG:
+		return "SIG"
+	case KEY:
+		return "KEY"
+	case AAAA:
+		return "AAAA"
+	case LOC:
+		return "LOC"
+	case SRV:
+		return "SRV"
+	case NAPTR:
+		return "NAPTR"
+	case KX:
+		return "KX"
+	case CERT:
+		return "CERT"
+	case DNAME:
+		return "DNAME"
+	case APL:
+		return "APL"
+	case DS:
+		return "DS"
+	case SSHFP:
+		return "SSHFP"
+	case IPSECKEY:
+		return "IPSECKEY"
+	case RRSIG:
+		return "RRSIG"
+	case NSEC:
+		return "NSEC"
+	case DNSKEY:
+		return "DNSKEY"
+	case DHCID:
+		return "DHCID"
+	case NSEC3:
+		return "NSEC3"
+	case NSEC3PARAM:
+		return "NSEC3PARAM"
+	case TLSA:
+		return "TLSA"
+	case HIP:
+		return "HIP"
+	case CDS:
+		return "CDS"
+	case CDNSKEY:
+		return "CDNSKEY"
+	case TKEY:
+		return "TKEY"
+	case TSIG:
+		return "TSIG"
+	case AXFR:
+		return "AXFR"
+	case MAILB:
+		return "MAILB"
+	case MAILA:
+		return "MAILA"
+	case ANY:
+		return "ANY"
+	case CAA:
+		return "CAA"
+	case TA:
+		return "TA"
+	case DLV:
+		return "DLV"
+	default:
+		return "<" + strconv.Itoa(int(t)) + ">"
+	}
+}
+
+func TypeFromString(str string) (val uint16, err error) {
+	switch str {
+	case "A":
+		val = A
+	case "NS":
+		val = NS
+	case "MD":
+		val = MD
+	case "MF":
+		val = MF
+	case "CNAME":
+		val = CNAME
+	case "SOA":
+		val = SOA
+	case "MB":
+		val = MB
+	case "MG":
+		val = MG
+	case "MR":
+		val = MR
+	case "NULL":
+		val = NULL
+	case "WKS":
+		val = WKS
+	case "PTR":
+		val = PTR
+	case "HINFO":
+		val = HINFO
+	case "MINFO":
+		val = MINFO
+	case "MX":
+		val = MX
+	case "TXT":
+		val = TXT
+	case "RP":
+		val = RP
+	case "AFSDB":
+		val = AFSDB
+	case "SIG":
+		val = SIG
+	case "KEY":
+		val = KEY
+	case "AAAA":
+		val = AAAA
+	case "LOC":
+		val = LOC
+	case "SRV":
+		val = SRV
+	case "NAPTR":
+		val = NAPTR
+	case "KX":
+		val = KX
+	case "CERT":
+		val = CERT
+	case "DNAME":
+		val = DNAME
+	case "APL":
+		val = APL
+	case "DS":
+		val = DS
+	case "SSHFP":
+		val = SSHFP
+	case "IPSECKEY":
+		val = IPSECKEY
+	case "RRSIG":
+		val = RRSIG
+	case "NSEC":
+		val = NSEC
+	case "DNSKEY":
+		val = DNSKEY
+	case "DHCID":
+		val = DHCID
+	case "NSEC3":
+		val = NSEC3
+	case "NSEC3PARAM":
+		val = NSEC3PARAM
+	case "TLSA":
+		val = TLSA
+	case "HIP":
+		val = HIP
+	case "CDS":
+		val = CDS
+	case "CONSKEY":
+		val = CDNSKEY
+	case "TKEY":
+		val = TKEY
+	case "TSIG":
+		val = TSIG
+	case "AXFR":
+		val = AXFR
+	case "MAILB":
+		val = MAILB
+	case "MAILA":
+		val = MAILA
+	case "ANY":
+		val = ANY
+	case "CAA":
+		val = CAA
+	case "TA":
+		val = TA
+	case "DLV":
+		val = DLV
+	default:
+		err = errors.New("unknown TYPE")
+	}
+
+	return
+}
+
+func ClassToString(c uint16) string {
+	switch c {
+	case IN:
+		return "IN"
+	case CS:
+		return "CS"
+	case CH:
+		return "CH"
+	case HS:
+		return "HS"
+	case ANY:
+		return "ANY"
+	default:
+		return "<" + strconv.Itoa(int(c)) + ">"
+	}
+}
+
+func ClassFromString(str string) (val uint16, err error) {
+	switch str {
+	case "IN":
+		val = IN
+	case "CS":
+		val = CS
+	case "CH":
+		val = CH
+	case "HS":
+		val = HS
+	case "ANY":
+		val = ANY
+	default:
+		err = errors.New("unknown CLASS")
+	}
+
+	return
+}
 
 type Label []byte
 
