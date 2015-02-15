@@ -24,7 +24,7 @@ func lookup(wg *sync.WaitGroup, proto, addr, name string, timeout time.Duration)
 	}
 
 	defer conn.Close()
-
+	conn.SetDeadline(time.Now().Add(timeout))
 	m := dnsscanner.NewQuery(name, dnsscanner.ANY, dnsscanner.IN)
 	if err := m.Send(conn); err != nil {
 		log.Println(err)
