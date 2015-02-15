@@ -1,4 +1,4 @@
-package dnsscan
+package dnsscanner
 
 import (
 	"strings"
