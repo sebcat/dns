@@ -14,7 +14,7 @@ func main() {
 
 	defer conn.Close()
 
-	m := dnsscanner.NewQuery("www.detectify.com", dnsscanner.A, dnsscanner.IN)
+	m := dnsscanner.NewQuery("www.detectify.com", dnsscanner.ANY, dnsscanner.IN)
 
 	if err := m.Send(conn); err != nil {
 		log.Fatal(err)

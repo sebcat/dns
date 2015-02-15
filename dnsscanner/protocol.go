@@ -5,41 +5,40 @@ import (
 	"strings"
 )
 
-type QType uint16
-
+// Types
 const (
-	A     QType = 1
-	NS          = 2
-	MD          = 3
-	MF          = 4
-	CNAME       = 5
-	SOA         = 6
-	MB          = 7
-	MG          = 8
-	MR          = 9
-	NULL        = 10
-	WKS         = 11
-	PTR         = 12
-	HINFO       = 13
-	MINFO       = 14
-	MX          = 15
-	TXT         = 16
-	AAAA        = 28
-	AXFR        = 252
-	MAILB       = 253
-	MAILA       = 254
-	TSTAR       = 255
+	A     uint16 = 1
+	NS           = 2
+	MD           = 3
+	MF           = 4
+	CNAME        = 5
+	SOA          = 6
+	MB           = 7
+	MG           = 8
+	MR           = 9
+	NULL         = 10
+	WKS          = 11
+	PTR          = 12
+	HINFO        = 13
+	MINFO        = 14
+	MX           = 15
+	TXT          = 16
+	AAAA         = 28
+	AXFR         = 252
+	MAILB        = 253
+	MAILA        = 254
 )
 
-type QClass uint16
-
+//Classes
 const (
-	IN    QClass = 1
-	CS           = 2
-	CH           = 3
-	HS           = 4
-	CSTAR        = 255
+	IN uint16 = 1
+	CS        = 2
+	CH        = 3
+	HS        = 4
 )
+
+// Both type and class
+const ANY uint16 = 255
 
 type Label []byte
 
@@ -110,8 +109,8 @@ func (h *Header) MarshalBinary() (data []byte, err error) {
 
 type Question struct {
 	QNAME  []Label
-	QTYPE  QType
-	QCLASS QClass
+	QTYPE  uint16
+	QCLASS uint16
 }
 
 func (q *Question) MarshalBinary() (data []byte, err error) {
@@ -160,7 +159,7 @@ func (m *Message) Send(conn net.Conn) error {
 	return nil
 }
 
-func NewQuery(label string, t QType, c QClass) *Message {
+func NewQuery(label string, t, c uint16) *Message {
 	return &Message{
 		Header: Header{
 			ID:      0xabcd,
